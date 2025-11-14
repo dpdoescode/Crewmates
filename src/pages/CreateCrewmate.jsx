@@ -1,54 +1,69 @@
 import { useState } from "react";
-import { supabase } from "../client";
+import { supabase } from "../supabase";
+import { useNavigate } from "react-router-dom";
+import "../styles.css";
 
 export default function CreateCrewmate() {
-  const [crewmate, setCrewmate] = useState({
-    name: "",
-    color: "",
-    crewmateCount: 1
-  });
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [color, setColor] = useState("");
+  const [crewmateCount, setCrewmateCount] = useState(1);
 
-  const createCrewmate = async (event) => {
-    event.preventDefault();
+  const colors = ["red", "blue", "green", "yellow", "pink", "purple"];
 
-    await supabase
-      .from("Crewmates")
-      .insert({
-        name: crewmate.name,
-        color: crewmate.color,
-        crewmateCount: crewmate.crewmateCount
-      })
-      .select();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    window.location = "/";
+    try {
+      const { data, error } = await supabase
+        .from("crew")
+        .insert([{ name, color, crewmateCount }])
+        .select();
+
+      if (error) throw error;
+
+      console.log("Crewmate added:", data);
+      navigate("/");
+    } catch (err) {
+      console.error("Error adding crewmate:", err.message);
+    }
   };
 
   return (
     <div className="page">
-      <h2>Create a New Crewmate</h2>
-
-      <form>
+      <h1>Create a Crewmate</h1>
+      <form onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="Crewmate Name"
-          onChange={(e) => setCrewmate({ ...crewmate, name: e.target.value })}
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
         />
 
-        <input
-          type="text"
-          placeholder="Color"
-          onChange={(e) => setCrewmate({ ...crewmate, color: e.target.value })}
-        />
+        <div>
+          {colors.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`color-button ${color === c ? "selected" : ""}`}
+              style={{ backgroundColor: c }}
+              onClick={() => setColor(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
 
         <input
           type="number"
           placeholder="Count"
-          onChange={(e) =>
-            setCrewmate({ ...crewmate, crewmateCount: Number(e.target.value) })
-          }
+          value={crewmateCount}
+          onChange={(e) => setCrewmateCount(Number(e.target.value))}
+          min={1}
         />
 
-        <input type="submit" value="Create" onClick={createCrewmate} />
+        <button type="submit">Add Crewmate</button>
       </form>
     </div>
   );
